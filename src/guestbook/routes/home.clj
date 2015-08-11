@@ -2,6 +2,7 @@
   (:require [compojure.core :refer :all]
             [guestbook.views.layout :as layout]
             [hiccup.form :refer :all]
+            [hiccup.page :refer [html5]]
             [guestbook.models.db :as db]))
 
 (defn format-time [timestamp]
@@ -56,4 +57,14 @@
 (defroutes home-routes
            (GET "/" [] (home))
            (GET "/wat" [] "<h1>i am master_j</h1>")
+           (GET "/info" {body        :body
+                         server-name :server-name
+                         ip          :remote-addr}
+             (html5
+               [:table
+                [:tr [:td "client ip"] [:td ip]]
+                [:tr [:td "request server-name"] [:td server-name]]
+                [:tr [:td "request body"] [:td body]]
+                ]
+               ))
            (POST "/" [name message] (save-message name message)))
