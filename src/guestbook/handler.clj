@@ -2,11 +2,12 @@
   (:use compojure.core
         ring.middleware.resource
         ring.middleware.file-info
-        hiccup.middleware
-        guestbook.routes.home)
+        hiccup.middleware)
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
-            [guestbook.models.db :as db]))
+            [guestbook.models.db :as db]
+            [guestbook.routes.home]
+            [guestbook.routes.showip]))
 
 (defn init []
   (println "guestbook is starting")
@@ -21,7 +22,10 @@
            (route/not-found "Not Found"))
 
 (def app
-  (-> (routes home-routes app-routes)
+  (-> (routes
+        guestbook.routes.home/home-routes
+        guestbook.routes.showip/ip-routes
+        app-routes)
       (handler/site)
       (wrap-base-url)))
 
