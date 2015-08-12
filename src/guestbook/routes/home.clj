@@ -61,7 +61,7 @@
                          server-name :server-name
                          ip          :remote-addr}
              (html5
-               [:table
+               [:table {:border 1}
                 [:tr [:td "client ip"] [:td ip]]
                 [:tr [:td "request server-name"] [:td server-name]]
                 [:tr [:td "request body"] [:td body]]
