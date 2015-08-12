@@ -1,6 +1,5 @@
 (ns guestbook.models.db
-  (:require [clojure.java.jdbc :as sql])
-  (:import java.sql.DriverManager))
+  (:require [clojure.java.jdbc :as sql]))
 
 (def db {:classname   "org.sqlite.JDBC",
          :subprotocol "sqlite",
@@ -31,4 +30,14 @@
       :guestbook
       [:name :message :timestamp]
       [name message (new java.util.Date)])))
+
+(defn get-entry [id]
+  (if-let [res (sql/with-connection
+                 db
+                 (sql/with-query-results
+                   res
+                   ["SELECT * FROM guestbook WHERE id = ?" id]
+                   (doall res)))]
+    (-> res first ((juxt :name :message)))
+    nil))
 
