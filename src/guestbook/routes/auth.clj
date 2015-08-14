@@ -1,34 +1,30 @@
 (ns guestbook.routes.auth
   (:require [compojure.core :refer [defroutes GET POST]]
-            [guestbook.views.layout :a slayout]
             [hiccup.form :refer
              [form-to label text-field password-field submit-button]]
+            [guestbook.views.layout :a slayout]
             [guestbook.views.layout :as layout]
+            [guestbook.models.db :as db]
             [noir.response :refer [redirect]]
-            [noir.session :as session]))
+            [noir.session :as session]
+            [noir.validation :refer [rule errors? has-value? on-error]]
+            [noir.util.crypt :as crypt]))
+
+(defn format-error [[error]]
+  [:p.error error])
 
 (defn control [field name text]
-  (list (label name text)
+  (list (on-error name format-error)
+        (label name text)
         (field name)
         [:br]))
 
-(defn login-page [& [error]]
+(defn login-page []
   (layout/common
-    (if error [:div.error "Login error:" error])
     (form-to [:post "/login"]
              (control text-field :id "Nickname")
              (control password-field :pass "Password")
              (submit-button "Login"))))
-
-(defn handle-login [id pass]
-  (cond
-    (empty? id) (login-page "Nickname is required")
-    (empty? pass) (login-page "Password is required")
-    (and (= "foo" id)
-         (= "bar" pass)) (do
-                           (session/put! :user id)
-                           (redirect "/"))
-    :else (login-page "Authentication failed")))
 
 (defn registration-page []
   (layout/common
@@ -38,13 +34,32 @@
              (control password-field :pass2 "Retype Password")
              (submit-button "Create Account"))))
 
+(defn handle-login [id pass]
+  (let [user (db/get-user id)]
+    (rule (has-value? id)
+          [:id "Nickname required"])
+    (rule (has-value? pass)
+          [:pass "Password required"])
+    (rule (and user (crypt/compare pass (:pass user)))
+          [:pass "invalid password"])
+    (if (errors? :id :pass)
+      (login-page)
+      (do (session/put! :user id)
+          (redirect "/")))))
+
+
+(defn handle-registration [id pass1 pass2]
+  (rule (= pass1 pass2)
+        [:pass "passwords did not match!"])
+  (if (errors? :pass)
+    (registration-page)
+    (do (db/add-user-record {:id id :pass (crypt/encrypt pass1)})
+        (redirect "/login"))))
+
 (defroutes auth-routes
            (GET "/register" [_] (registration-page))
            (POST "/register" [id pass1 pass2]
-             (println id pass1 pass2)
-             (if (= pass1 pass2)
-               (redirect "/")
-               (registration-page)))
+             (handle-registration id pass1 pass2))
 
            (GET "/login" [] (login-page))
            (POST "/login" [id pass]

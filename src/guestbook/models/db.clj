@@ -6,6 +6,25 @@
          :subprotocol "sqlite",
          :subname     "db.sq3"})
 
+(defn create-user-table []
+  (sql/with-connection
+    db
+    (sql/create-table
+      :users
+      [:id "VARCHAR(20) PRIMARY KEY"]
+      [:pass "VARCHAR(100)"])))
+
+(defn add-user-record [user]
+  (sql/with-connection
+    db
+    (sql/insert-record :users user)))
+
+(defn get-user [id]
+  (sql/with-connection
+    db
+    (sql/with-query-results
+      res ["SELECT * FROM users WHERE id = ?" id] (first res))))
+
 (defn create-guestbook-table []
   (sql/with-connection
     db
