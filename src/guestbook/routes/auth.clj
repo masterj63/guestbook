@@ -4,12 +4,31 @@
             [hiccup.form :refer
              [form-to label text-field password-field submit-button]]
             [guestbook.views.layout :as layout]
-            [noir.response :refer [redirect]]))
+            [noir.response :refer [redirect]]
+            [noir.session :as session]))
 
 (defn control [field name text]
   (list (label name text)
         (field name)
         [:br]))
+
+(defn login-page [& [error]]
+  (layout/common
+    (if error [:div.error "Login error:" error])
+    (form-to [:post "/login"]
+             (control text-field :id "Nickname")
+             (control password-field :pass "Password")
+             (submit-button "Login"))))
+
+(defn handle-login [id pass]
+  (cond
+    (empty? id) (login-page "Nickname is required")
+    (empty? pass) (login-page "Password is required")
+    (and (= "foo" id)
+         (= "bar" pass)) (do
+                           (session/put! :user id)
+                           (redirect "/"))
+    :else (login-page "Authentication failed")))
 
 (defn registration-page []
   (layout/common
@@ -25,4 +44,16 @@
              (println id pass1 pass2)
              (if (= pass1 pass2)
                (redirect "/")
-               (registration-page))))
+               (registration-page)))
+
+           (GET "/login" [] (login-page))
+           (POST "/login" [id pass]
+             (handle-login id pass))
+
+           (GET "/logout" []
+             (layout/common
+               (form-to [:post "/logout"]
+                        (submit-button "Logout"))))
+           (POST "/logout" []
+             (session/clear!)
+             (redirect "/")))

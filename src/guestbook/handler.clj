@@ -7,7 +7,9 @@
   (:require [compojure.handler :as handler]
             [compojure.route :as route]
             [guestbook.models.db :as db]
-            [guestbook.routes.auth :refer [auth-routes]]))
+            [guestbook.routes.auth :refer [auth-routes]]
+            [noir.session :as session]
+            [ring.middleware.session.memory :refer [memory-store]]))
 
 (defn init []
   (println "guestbook is starting")
@@ -24,6 +26,6 @@
 (def app
   (-> (routes auth-routes home-routes app-routes)
       (handler/site)
-      (wrap-base-url)))
+      (session/wrap-noir-session {:session (memory-store)})))
 
 
