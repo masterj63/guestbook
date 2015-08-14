@@ -32,7 +32,7 @@
 
 (defn save-message [name message]
   (cond
-    (empty? name) (homename message "Some dummy forgot to leave a name")
+    (empty? name) (home name message "Some dummy forgot to leave a name")
     (empty? message) (home name message "Don't you have something to say?")
     :else (do
             (db/save-message name message)
