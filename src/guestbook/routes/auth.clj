@@ -47,7 +47,6 @@
       (do (session/put! :user id)
           (redirect "/")))))
 
-
 (defn handle-registration [id pass1 pass2]
   (rule (= pass1 pass2)
         [:pass "passwords did not match!"])
